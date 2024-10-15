@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--java 주소 등록 !-->
+<mapper namespace="com.ohgiraffers.section01.xmlmapper.ElementMapper">
+
+    <cache eviction="LRU" flushInterval="1000" size="512" readOnly="true"/>
+
+    <select id="selectCacheTest" resultType="java.lang.String" useCache="false">
+        SELECT
+            MENU_NAME
+        FROM
+            TBL_MENU
+    </select>
+
+    <resultMap id="menuResultMap1" type="com.ohgiraffers.common.MenuDTO">
+        <id property="code" column="MENU_CODE"/>
+        <result property="name" column="MENU_NAME"/>
+        <result property="price" column="MENU_PRICE"/>
+        <result property="categoryCode" column="CATEGORY_CODE"/>
+
+    </resultMap>
+    <resultMap id="menuResultMap2" type="com.ohgiraffers.common.MenuDTO" extends="menuResultMap1">
+        <result property="orderableStatus" column="ORDERABLE_STATUS"/>
+    </resultMap>
+
+    <select id="selectResultMapTest" resultMap="menuResultMap2">
+        SELECT
+            MENU_CODE,
+            MENU_NAME,
+            CATEGORY_CODE,
+            ORDERABLE_STATUS
+        FROM
+            TBL_MENU
+        WHERE
+            ORDERABLE_STATUS = 'Y'
+
+    </select>
+
+
+    <resultMap id="menuResultMap3" type="com.ohgiraffers.common.MenuDTO">
+        <constructor>
+            <idArg column="MENU_CODE" javaType="_int"/>
+            <arg column="MENU_NAME" javaType="String"/>
+            <arg column="MENU_PRICE" javaType="_int"/>
+            <arg column="CATEGORY_CODE" javaType="_int"/>
+            <arg column="ORDERABLE_STATUS" javaType="String"/>
+        </constructor>
+    </resultMap>
+    <select id="selectResultMapConstructor" resultMap="menuResultMap3">
+        SELECT
+            *
+        FROM
+            TBL_MENU
+        WHERE
+            ORDERABLE_STATUS = 'Y'
+    </select>
+
+<!-- association
+        resultMap 을 구성하는 방법 1. 따로 만든 result 이용
+        -->
+<!--<resultMap id="categoryResultMap" type="com.ohgiraffers.common.CategoryDTO">-->
+<!--    <id property="code" column="CATEGORY_CODE"/>-->
+<!--    <result property="name" column="CATEGORY_NAME"/>-->
+<!--    <result property="refCategoryCode" column="REF_CATEGORY_CODE"/>-->
+<!--</resultMap>-->
+<!--    <resultMap id="menuAndCategoryResultMap" type="com.ohgiraffers.common.MenuAndCategoryDTO">-->
+<!--        <id property="code" column="MENU_CODE"/>-->
+<!--        <result property="name" column="MENU_NAME"/>-->
+<!--        <result property="price" column="MENU_PRICE"/>-->
+<!--        <result property="categoryCode" column="CATEGORY_CODE"/>-->
+<!--        <association property="categoryDTO" resultMap="categoryResultMap"/>-->
+<!--    </resultMap>-->
+
+
+<!--association
+        resultMap 을 구성하는 방법 2. association 내부에 Id와 -->
+    <resultMap id="menuAndCategoryResultMap" type="com.ohgiraffers.common.MenuAndCategoryDTO">
+        <id property="code" column="MENU_CODE"/>
+        <result property="name" column="MENU_NAME"/>
+        <result property="price" column="MENU_PRICE"/>
+        <result property="categoryCode" column="CATEGORY_CODE"/>
+        <association property="categoryDTO" javaType="com.ohgiraffers.common.CategoryDTO">
+            <id property="code" column="CATEGORY_CODE"/>
+            <result property="name" column="CATEGORY_NAME"/>
+            <result property="refCategoryCode" column="REF_CATEGORY_CODE"/>
+        </association>
+    </resultMap>
+    <select id="selectResultMapAssociationTest" resultMap="menuAndCategoryResultMap">
+        SELECT
+            A.MENU_CODE,
+            A.MENU_NAME,
+            A.ORDERABLE_STATUS,
+            A.MENU_PRICE,
+            B.CATEGORY_NAME,
+            B.REF_CATEGORY_CODE
+        FROM
+            TBL_MENU A
+            JOIN
+            TBL_CATEGORY B
+            ON(A.CATEGORY_CODE = B.CATEGORY_CODE)
+        WHERE
+            A.ORDERABLE_STATUS = 'Y'
+
+    </select>
+<resultMap id="categoryAndMenuResultMap" type="com.ohgiraffers.common.CategoryAndMenuDTO">
+    <id property="code" column="CATEGORY_CODE"/>
+    <result property="name" column="CATEGORY_NAME"/>
+    <result property="refCategoryCode" column="REF_CATEGORY_CODE"/>
+    <collection property="menuList" ofType="com.ohgiraffers.common.MenuDTO">
+        <id property="code" column="MENU_CODE"/>
+        <result property="name" column="MENU_NAME"/>
+        <result property="price" column="MENU_PRICE"/>
+        <result property="categoryCode" column="CATEGORY_CODE"/>
+        <result property="orderableStatus" column="ORDERABLE_STATUS"/>
+    </collection>
+</resultMap>
+
+<select id="selectResultMapCollection" resultMap="categoryAndMenuResultMap">
+    SELECT
+        A.CATEGORY_CODE,
+        A.CATEGORY_NAME,
+        A.REF_CATEGORY_CODE,
+        B.MENU_CODE,
+        B.MENU_NAME,
+        B.MENU_PRICE,
+        B.CATEGORY_CODE,
+        B.ORDERABLE_STATUS
+    FROM
+        TBL_CATEGORY A
+        LEFT JOIN
+        TBL_MENU B
+        ON (A.CATEGORY_CODE = B.CATEGORY_CODE)
+    ORDER BY
+        A.CATEGORY_CODE
+</select>
+
+    <!--<sql>-->
+    <!-- <sql> 각 매핑 구문에서 공통적으로 사용할 수 있는
+          SQL 문자열의  일부를 정의하고 필요시 재사용하기 위한 목적-->
+    <sql id="menuColumn">
+        MENU_CODE,
+        MENU_NAME,
+        MENU_PRICE,
+        CATEGORY_CODE,
+        ORDERABLE_STATUS
+    </sql>
+
+    <select id="selectSqlTest" resultMap="menuResultMap2">
+        SELECT
+            <include refid="menuColumn">
+            </include>
+        FROM
+            TBL_MENU
+
+    <!--
+            1. parameterType 속성
+               - 파라미터 타입을 의미한다. 이미 정의 된 타입(hashmap,class) 등등을
+               - 사용할수 있고, class 를 사용할 시에 주의점은 full-name 을 기술해야한다.
+            2. resultType 속성
+               - 매핑 구문의 결과 행(row)를 반환할 타입이다.
+               - 여러 메뉴의 경우 List 가 아닌 1개의 행을 기준으로 하기 때문에
+               - 1개의 행에 해당하는 MenuDTO 가 된다.
+            3. resultMap 속성
+               - 쿼리문 수행의 결과를 우리가 지정한 JAVA 객체 타입에 매핑을 시키는 아주 중요한 속성 !!!!!!!!!!!!!!!!!!!!!!!!
+               -->
+    </select>
+
+</mapper>
+

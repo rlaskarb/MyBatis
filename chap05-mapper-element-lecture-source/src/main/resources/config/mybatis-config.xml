@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-config.dtd">
+<!--<configuration>마이바티스의 기본설정을 정의하한다.-->
+<configuration>
+<!--<properties> 외부에서 설정값을 가져와 사용할수 있게 해주는 기능-->
+<!--<resource>외부의 properties 파일을 지정하여 설정값을 가져오는데 사용-->
+    <properties resource="config/connection-info.properties"/>
+<!--<environments> 여러데이터 베이스 환경을 정의할때 사용돼! 이를 통해 개발,테스트,프로덕션환경등 다양한 환경에 맞춰 설정을 변경할수 있다! -->
+<!--<default> 속성은 기본 환경을 지정하는 사용 된다.    -->
+    <environments default="dev">
+        <environment id="dev">
+<!--<transactionManager> 데이터베이스 트랜잭션을 관리하는 역활을 한다.
+                         트랜잭션은 데이터베이스 작업의 단위를 의미하며,성공적으로 완료되면 커밋하고,
+                         실패하면 롤백하는 과정을 통해 데이터 일관성을 유지-->
+            <transactionManager type="JDBC"></transactionManager>
+<!--<dataSource> 데이터베이스 연결 풀을 관리하는 데 사용된다. 즉 어플리케이션이 데이터 베이스에 접근할 때
+                 필요한 객체를 생성하고 관리해주는 역활-->
+            <dataSource type="POOLED">
+                <property name="driver" value="${driver}"/>
+                <property name="url" value="${url}"/>
+                <property name="username" value="${username}"/>
+                <property name="password" value="${password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <mappers>
+        <package name="com.ohgiraffers.section01.xmlmapper"/>
+    </mappers>
+</configuration>
